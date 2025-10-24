@@ -1,0 +1,137 @@
+# 前端代码审查规范
+guidelines:
+  # ====================================
+  # 🔴 高优先级 - 必须修复
+  # 会导致：编译错误、运行时崩溃、严重安全漏洞、内存泄漏
+  # ====================================
+  
+  # --- TypeScript 编译错误 ---
+  - id: "TS-001"
+    severity: "高"
+    category: "TypeScript"
+    description: "禁止在 TSX/Vue 模板中使用尖括号类型断言"
+    suggestion: "尖括号会与 JSX/TSX 标签冲突导致编译错误。必须使用 `as` 关键字。"
+    examples:
+      bad: "const x = <string>value"
+      good: "const x = value as string"
+
+  # --- Vue3 运行时错误 ---
+  - id: "VUE-001"
+    severity: "高"
+    category: "Vue3"
+    description: "禁止在同一元素上同时使用 v-for 和 v-if"
+    suggestion: "Vue3 中 v-if 优先级高于 v-for，会导致访问未定义变量的运行时错误。将 v-if 移到外层或使用计算属性过滤数据。"
+    examples:
+      bad: "<div v-for=\"item in list\" v-if=\"item.visible\">{{ item }}</div>"
+      good: "<div v-for=\"item in visibleList\" :key=\"item.id\">{{ item }}</div>"
+
+  - id: "VUE-002"
+    severity: "高"
+    category: "Vue3"
+    description: "禁止直接修改 props"
+    suggestion: "直接修改 props 会导致 Vue 运行时警告和单向数据流混乱。使用 emit 事件或创建本地响应式副本。"
+    examples:
+      bad: "props.count++"
+      good: "emit('update:count', props.count + 1)"
+
+  - id: "VUE-003"
+    severity: "高"
+    category: "Vue3"
+    description: "ref 在 script 中必须使用 .value 访问"
+    suggestion: "在模板外访问 ref 忘记 .value 会导致逻辑错误和类型错误。"
+    examples:
+      bad: "const count = ref(0); if (count > 10) { }"
+      good: "const count = ref(0); if (count.value > 10) { }"
+
+  - id: "VUE-004"
+    severity: "高"
+    category: "Vue3"
+    description: "watch 的回调中避免直接修改被监听的值"
+    suggestion: "会导致无限循环和浏览器崩溃。使用中间变量或重新设计数据流。"
+    examples:
+      bad: "watch(count, () => count.value++)"
+      good: "watch(count, (newVal) => result.value = newVal * 2)"
+
+  - id: "VUE-005"
+    severity: "高"
+    category: "Vue3"
+    description: "计算属性必须是同步的"
+    suggestion: "计算属性中使用 async/await 会返回 Promise 而非值，导致模板渲染错误。使用 watchEffect 或 onMounted 处理异步逻辑。"
+    examples:
+      bad: "const data = computed(async () => await fetch('/api'))"
+      good: "const data = ref(null); onMounted(async () => { data.value = await fetch('/api') })"
+
+  - id: "VUE-006"
+    severity: "高"
+    category: "Vue3"
+    description: "组件卸载时必须清理定时器和事件监听"
+    suggestion: "不清理会导致内存泄漏，长时间使用后浏览器卡顿。在 onUnmounted 中清理所有副作用。"
+    examples:
+      bad: "onMounted(() => { setInterval(() => {}, 1000) })"
+      good: "onMounted(() => { const timer = setInterval(() => {}, 1000); onUnmounted(() => clearInterval(timer)) })"
+
+  # --- 严重安全漏洞 ---
+  - id: "SEC-001"
+    severity: "高"
+    category: "安全"
+    description: "禁止使用 eval() 和 new Function() 执行动态代码"
+    suggestion: "存在严重的代码注入风险。使用 JSON.parse() 解析数据，或使用安全的表达式解析库。"
+    examples:
+      bad: "eval(userInput)"
+      good: "JSON.parse(userInput)"
+
+  - id: "SEC-002"
+    severity: "高"
+    category: "安全"
+    description: "禁止使用 v-html 渲染不可信的用户输入"
+    suggestion: "直接渲染未转义的 HTML 会导致 XSS 攻击。使用普通插值 {{ }} 或 DOMPurify 库清理 HTML。"
+    examples:
+      bad: "<div v-html=\"userInput\"></div>"
+      good: "<div>{{ userInput }}</div>"
+
+  - id: "SEC-003"
+    severity: "高"
+    category: "安全"
+    description: "敏感信息（API密钥、token）禁止硬编码在代码中"
+    suggestion: "硬编码的敏感信息会被打包到前端代码，任何人都能查看。使用环境变量存储。"
+    examples:
+      bad: "const apiKey = 'sk-123456789abcdef'"
+      good: "const apiKey = import.meta.env.VITE_API_KEY"
+
+  # --- 常见运行时错误 ---
+  - id: "JS-001"
+    severity: "高"
+    category: "JavaScript"
+    description: "访问可能为 null/undefined 的属性前必须检查"
+    suggestion: "直接访问会导致 'Cannot read property of null' 运行时错误。使用可选链 ?. 或先判断。"
+    examples:
+      bad: "user.profile.name"
+      good: "user?.profile?.name ?? 'Unknown'"
+
+  # ====================================
+  # 🟡 中优先级 - 建议修复
+  # 影响：代码质量、性能、可维护性
+  # ====================================
+  
+  - id: "VUE-101"
+    severity: "中"
+    category: "Vue3"
+    description: "v-for 必须使用唯一的 :key 属性"
+    suggestion: "缺少 key 会导致列表更新时的渲染错误和性能问题。使用唯一标识符作为 key，避免使用索引。"
+    examples:
+      bad: "<div v-for=\"item in list\">{{ item }}</div>"
+      good: "<div v-for=\"item in list\" :key=\"item.id\">{{ item }}</div>"
+
+  # ====================================
+  # 🟢 低优先级 - 可选优化
+  # 影响：代码风格、团队协作
+  # ====================================
+  
+  - id: "CODE-101"
+    severity: "低"
+    category: "代码质量"
+    description: "使用 === 代替 == 进行比较"
+    suggestion: "严格相等运算符避免隐式类型转换带来的意外行为。"
+    examples:
+      bad: "if (count == '0') { }"
+      good: "if (count === 0) { }"

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>README 预览</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #24292e;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        h1 {
+            font-size: 2em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+        h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+        h3 {
+            font-size: 1.25em;
+        }
+        code {
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+            font-size: 85%;
+            margin: 0;
+            padding: 0.2em 0.4em;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        pre {
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            padding: 16px;
+            overflow: auto;
+            line-height: 1.45;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            display: block;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+        table th, table td {
+            border: 1px solid #dfe2e5;
+            padding: 6px 13px;
+        }
+        table th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+        table tr:nth-child(2n) {
+            background-color: #f6f8fa;
+        }
+        blockquote {
+            border-left: 4px solid #dfe2e5;
+            color: #6a737d;
+            padding-left: 16px;
+            margin-left: 0;
+        }
+        a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        ul, ol {
+            padding-left: 2em;
+        }
+        li {
+            margin: 0.25em 0;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 40px 0;
+            font-size: 20px;
+            overflow-x: auto;
+        }
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+            font-size: 20px !important;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #eaecef;
+            margin: 24px 0;
+        }
+        #loading {
+            text-align: center;
+            padding: 40px;
+            color: #6a737d;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">正在加载 README.md...</div>
+    <div id="content"></div>
+
+    <script>
+        // 初始化 Mermaid
+        mermaid.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            themeVariables: {
+                fontSize: '20px',
+                primaryColor: '#e1f5fe',
+                primaryTextColor: '#000',
+                primaryBorderColor: '#0366d6',
+                lineColor: '#0366d6',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 25,
+                nodeSpacing: 80,
+                rankSpacing: 60,
+                diagramPadding: 15
+            }
+        });
+
+        // 配置 marked
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false
+        });
+
+        // 加载 README.md
+        fetch('README.md')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('无法加载 README.md 文件');
+                }
+                return response.text();
+            })
+            .then(markdown => {
+                document.getElementById('loading').style.display = 'none';
+                
+                // 转换 Markdown 为 HTML
+                const html = marked.parse(markdown);
+                document.getElementById('content').innerHTML = html;
+
+                // 渲染所有 Mermaid 图表
+                const mermaidBlocks = document.querySelectorAll('code.language-mermaid');
+                mermaidBlocks.forEach((block, index) => {
+                    const code = block.textContent;
+                    const div = document.createElement('div');
+                    div.className = 'mermaid';
+                    div.textContent = code;
+                    block.parentElement.replaceWith(div);
+                });
+
+                // 执行 Mermaid 渲染
+                mermaid.run({
+                    querySelector: '.mermaid'
+                });
+            })
+            .catch(error => {
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #d73a49;">❌ 加载失败: ${error.message}</p>
+                    <p>请确保此 HTML 文件与 README.md 在同一目录下。</p>
+                    <p>如果使用浏览器直接打开，可能需要启动本地服务器。</p>
+                    <p><strong>推荐方法：</strong></p>
+                    <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
+                        <li>使用 VS Code 安装 "Live Server" 插件，右键点击此文件选择 "Open with Live Server"</li>
+                        <li>或在命令行运行: <code>npx serve .</code></li>
+                        <li>或在命令行运行: <code>python -m http.server 8000</code></li>
+                    </ul>
+                `;
+            });
+    </script>
+</body>
+</html>
+

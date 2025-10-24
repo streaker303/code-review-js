@@ -1,0 +1,40 @@
+{
+  "name": "code-review-js",
+  "version": "1.0.0",
+  "description": "A JavaScript-based AI code review script for CI/CD pipelines.",
+  "main": "src/main.js",
+  "bin": {
+    "code-review-js": "./src/main.js"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "code-review",
+    "gitlab",
+    "ci",
+    "automated-review",
+    "ast-analysis"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "src/",
+    "system_prompt.txt",
+    "README.md"
+  ],
+  "dependencies": {
+    "@babel/parser": "^7.24.7",
+    "@babel/traverse": "^7.24.7",
+    "@vue/compiler-sfc": "^3.4.31",
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "js-yaml": "^4.1.0",
+    "p-limit": "^3.1.0"
+  }
+}
