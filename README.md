@@ -108,7 +108,7 @@ ai_code_review:
 |------|--------|------|
 | `AST_MAX_SNIPPET_LENGTH` | `20000` | 代码片段最大字符数 |
 | `AST_MAX_BLOCK_SIZE_LINES` | `200` | 代码块最大行数 |
-| `AST_MAX_DEPTH` | `150` | AST遍历最大深度 |
+| `AST_MAX_DEPTH` | `60` | AST遍历最大深度 |
 | `AST_TIMEOUT_MS` | `8000` | AST解析超时时间（毫秒） |
 
 ### 3. 编码规范配置（可选）
