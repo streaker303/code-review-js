@@ -27,7 +27,7 @@ function loadRuntimeConfig() {
     // AST 配置
     const AST_MAX_SNIPPET_LENGTH = parseInt(process.env.AST_MAX_SNIPPET_LENGTH || '20000', 10);
     const AST_MAX_BLOCK_SIZE_LINES = parseInt(process.env.AST_MAX_BLOCK_SIZE_LINES || '200', 10);
-    const AST_MAX_DEPTH = parseInt(process.env.AST_MAX_DEPTH || '150', 10);
+    const AST_MAX_DEPTH = parseInt(process.env.AST_MAX_DEPTH || '60', 10);
     const AST_TIMEOUT_MS = parseInt(process.env.AST_TIMEOUT_MS || '8000', 10);
 
     // 路径配置
