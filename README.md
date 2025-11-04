@@ -68,7 +68,6 @@ stages:
 
 ai_code_review:
   stage: review
-  image: node:18-alpine
   variables:
     GIT_DEPTH: "0"
   before_script:
@@ -102,8 +101,10 @@ ai_code_review:
 | `REVIEW_MODE` | `report` | 发布模式：`report` 或 `inline` |
 | `ENABLE_AST` | `true` | 是否启用AST分析 |
 | `DRY_RUN` | `false` | 测试模式，不实际发布 |
+| `MAX_DIFF_LINES` | `500` | Diff最大行数限制 |
+| `MAX_DIFF_CHARS` | `50000` | Diff最大字符数限制 |
 
-**AST配置（高级）**：
+**AST配置**：
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `AST_MAX_SNIPPET_LENGTH` | `20000` | 代码片段最大字符数 |

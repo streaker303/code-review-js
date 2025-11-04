@@ -7,18 +7,52 @@ const { generateReviewReport } = require('./report');
 
 /**
  * 准备待审查的文件列表
+ * @param {Array} diffs - GitLab返回的diff数组
+ * @param {Object} config - 配置对象
+ * @returns {Object} - { filesToReview: Array, skippedFiles: Array }
  */
-function prepareFilesForReview(diffs) {
-    return diffs
-        .filter(d => d.diff && !d.diff.startsWith('Binary files'))
-        .map(d => {
-            const header = `diff --git a/${d.old_path} b/${d.new_path}\n--- a/${d.old_path}\n+++ b/${d.new_path}\n`;
-            return {
+function prepareFilesForReview(diffs, config) {
+    const filesToReview = [];
+    const skippedFiles = [];
+
+    diffs.forEach(d => {
+        // 跳过二进制文件
+        if (!d.diff || d.diff.startsWith('Binary files')) {
+            return;
+        }
+
+        const header = `diff --git a/${d.old_path} b/${d.new_path}\n--- a/${d.old_path}\n+++ b/${d.new_path}\n`;
+        const fullDiff = header + d.diff;
+        
+        // 检查diff大小
+        const diffLines = fullDiff.split('\n').length;
+        const diffChars = fullDiff.length;
+        
+        // 超过限制则跳过
+        if (diffLines > config.maxDiffLines || diffChars > config.maxDiffChars) {
+            skippedFiles.push({
                 path: d.new_path,
-                diff: header + d.diff,
-                old_path: d.old_path,
-            };
+                reason: 'diff_too_large',
+                lines: diffLines,
+                chars: diffChars,
+                maxLines: config.maxDiffLines,
+                maxChars: config.maxDiffChars,
+            });
+            console.warn(
+                `⚠️  跳过文件 ${d.new_path}: diff过大 ` +
+                `(${diffLines}行/${diffChars}字符, 限制: ${config.maxDiffLines}行/${config.maxDiffChars}字符)`
+            );
+            return;
+        }
+
+        filesToReview.push({
+            path: d.new_path,
+            diff: fullDiff,
+            old_path: d.old_path,
         });
+    });
+
+    return { filesToReview, skippedFiles };
 }
 
 /**
@@ -111,14 +145,22 @@ async function runReview() {
         ]);
 
         // 准备文件列表
-        const filesToReview = prepareFilesForReview(diffs);
+        const { filesToReview, skippedFiles } = prepareFilesForReview(diffs, config);
+        
+        // 输出统计信息
+        console.log(`📊 文件统计: 总计 ${diffs.length} 个变更文件`);
+        console.log(`   ✅ 待审查: ${filesToReview.length} 个`);
+        if (skippedFiles.length > 0) {
+            console.log(`   ⏭️  已跳过: ${skippedFiles.length} 个 (diff过大)`);
+            skippedFiles.forEach(sf => {
+                console.log(`      - ${sf.path} (${sf.lines}行/${sf.chars}字符)`);
+            });
+        }
         
         if (filesToReview.length === 0) {
-            console.log("📭 未发现可审查的代码变更");
+            console.log("📭 没有可审查的文件");
             return;
         }
-
-        console.log(`📋 待审查文件: ${filesToReview.length}`);
 
         // 执行审查
         const reviews = await reviewFiles(filesToReview, config, guidelines);
