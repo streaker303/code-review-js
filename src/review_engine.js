@@ -81,18 +81,15 @@ async function reviewSingleFile(filePath, diffText, config, guidelines, systemPr
 
     } catch (error) {
         console.error(`审查失败: ${filePath}`, error.message);
+        // API 调用失败时不返回 issues，避免将系统错误当作代码问题发布
         return {
             file_path: filePath,
             status: 'ERROR',
-            issues: [{
-                line: 0,
-                type: '审查失败',
-                severity: '高',
-                description: `审查出错: ${error.message}`,
-            }],
+            issues: [],  // 不发布系统错误到 MR
             reviews: [],
             added_lines: 0,
             deleted_lines: 0,
+            error: error.message,  // 记录错误信息用于日志
         };
     }
 }
@@ -127,20 +124,17 @@ async function reviewFiles(files, config, guidelines) {
                 return { path, result };
             } catch (error) {
                 console.error(`❌ 处理失败: ${path}`, error.message);
+                // API 调用失败时不返回 issues，避免将系统错误当作代码问题发布
                 return {
                     path,
                     result: {
                         file_path: path,
                         status: 'ERROR',
-                        issues: [{
-                            line: 0,
-                            type: '审查失败',
-                            severity: '高',
-                            description: `审查出错: ${error.message}`,
-                        }],
+                        issues: [],  // 不发布系统错误到 MR
                         reviews: [],
                         added_lines: 0,
                         deleted_lines: 0,
+                        error: error.message,  // 记录错误信息用于日志
                     }
                 };
             }

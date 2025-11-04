@@ -63,6 +63,7 @@ function generateReviewReport(reviews) {
     let fileCount = 0;
     let issueCount = 0;
     let highSeverityCount = 0;
+    let errorCount = 0;
     
     const sortedFiles = Object.keys(reviews).sort();
 
@@ -71,6 +72,12 @@ function generateReviewReport(reviews) {
         if (!result) continue;
         
         fileCount++;
+        
+        // 统计错误文件
+        if (result.status === 'ERROR') {
+            errorCount++;
+        }
+        
         const currentFileIssues = result.issues || [];
         issueCount += currentFileIssues.length;
 
@@ -78,7 +85,12 @@ function generateReviewReport(reviews) {
         const added = result.added_lines || 0;
         const deleted = result.deleted_lines || 0;
         
-        summary += `| ${statusEmoji} | \`${filePath}\` | +${added} / -${deleted} | ${currentFileIssues.length} 个发现 |\n`;
+        // 对于ERROR状态的文件，显示错误信息
+        const findingsText = result.status === 'ERROR' 
+            ? `⚠️ 审查失败` 
+            : `${currentFileIssues.length} 个发现`;
+        
+        summary += `| ${statusEmoji} | \`${filePath}\` | +${added} / -${deleted} | ${findingsText} |\n`;
 
         if (currentFileIssues.length > 0) {
             // 使用增强报告格式（HTML表格）
@@ -94,7 +106,17 @@ function generateReviewReport(reviews) {
     }
 
     report += `### 📝 总结\n\n`;
-    report += `本次审查共分析了 **${fileCount}** 个文件，发现 **${issueCount}** 个潜在问题，其中 **${highSeverityCount}** 个为高严重性问题。\n\n`;
+    const successCount = fileCount - errorCount;
+    report += `本次审查共分析了 **${fileCount}** 个文件`;
+    if (errorCount > 0) {
+        report += ` (✅ 成功: ${successCount} | ❌ 失败: ${errorCount})`;
+    }
+    report += `，发现 **${issueCount}** 个潜在问题，其中 **${highSeverityCount}** 个为高严重性问题。\n\n`;
+    
+    if (errorCount > 0) {
+        report += `> ⚠️ **注意**: 有 ${errorCount} 个文件审查失败，可能是 API 错误或网络问题。\n\n`;
+    }
+    
     report += '| 状态 | 文件路径 | 代码变更 | 发现 |\n';
     report += '|:---:|:---|:---|:---|\n';
     report += summary;

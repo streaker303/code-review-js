@@ -165,6 +165,16 @@ async function runReview() {
         // 执行审查
         const reviews = await reviewFiles(filesToReview, config, guidelines);
 
+        // 检查是否有成功审查的文件
+        const successCount = Object.values(reviews).filter(r => r.status !== 'ERROR').length;
+        const errorCount = Object.values(reviews).filter(r => r.status === 'ERROR').length;
+
+        // 如果所有文件都审查失败，不发布报告
+        if (successCount === 0 && errorCount > 0) {
+            console.error(`❌ 所有文件审查失败 (${errorCount}/${filesToReview.length})，请检查 API 配置和网络连接`);
+            process.exit(1);
+        }
+
         console.log('📦 生成报告...');
 
         // 发布结果
@@ -174,7 +184,12 @@ async function runReview() {
             await publishReport(reviews, config);
         }
 
-        console.log("🎉 审查完成！");
+        // 显示完成信息
+        if (errorCount > 0) {
+            console.log(`⚠️  审查完成，但有 ${errorCount} 个文件审查失败`);
+        } else {
+            console.log("🎉 审查完成！");
+        }
 
     } catch (error) {
         console.error("❌ 审查失败:", error);
