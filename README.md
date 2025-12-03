@@ -68,17 +68,18 @@ stages:
 
 ai_code_review:
   stage: review
-  variables:
-    GIT_DEPTH: "0"
-  before_script:
+  interruptible: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^(master|stage)$/'
+      when: on_success
+  script:
+    - rm -rf code-review-js
     - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@your-gitlab-domain/your-group/code-review-js.git
     - cd code-review-js
-    - pnpm install
     - cp ../coding_guidelines.yaml . || echo "No custom guidelines"
-  script:
+    - pnpm install
     - node src/main.js
-  only:
-    - merge_requests
+  allow_failure: true
 ```
 
 ### 2. 环境变量配置
